@@ -71,3 +71,13 @@ int main()
     }
     return 0;
 }
+// Enter number of vertices and edges: 4 4
+// Enter edges (u v):
+// 0 1
+// 0 2
+// 1 3
+// 2 3
+// Enter starting vertex for BFS: 0
+
+// BFS Traversal starting from node 0:
+// 0 1 2 3
