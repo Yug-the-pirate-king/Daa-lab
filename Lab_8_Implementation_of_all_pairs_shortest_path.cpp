@@ -1,134 +1,138 @@
 #include <stdio.h>
-#define INF 999
 
-int dist[20][20], n, e;
-int cost[20], path[20], h[20]; // Shared helpers for Multistage & Johnson
+const int MAX_VERTICES = 20;
+const int INF = 999;
 
-void floydWarshall()
-{
-    int i, j, k;
-    for (k = 0; k < n; k++)
-        for (i = 0; i < n; i++)
-            for (j = 0; j < n; j++)
-                if (dist[i][k] + dist[k][j] < dist[i][j])
-                    dist[i][j] = dist[i][k] + dist[k][j];
-}
+int numVertices, numEdges;
+int distance[MAX_VERTICES][MAX_VERTICES];
+int stageCost[MAX_VERTICES];
+int nodePotential[MAX_VERTICES];
 
-void multistageGraph()
-{
-    int i, j;
-    cost[n - 1] = 0;
-    for (i = n - 2; i >= 0; i--)
-    {
-        cost[i] = INF;
-        for (j = i + 1; j < n; j++)
-        {
-            if (dist[i][j] != INF && dist[i][j] + cost[j] < cost[i])
-                cost[i] = dist[i][j] + cost[j];
+void initializeDistanceMatrix() {
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            distance[i][j] = (i == j) ? 0 : INF;
         }
     }
 }
 
-void dijkstra(int src, int outputRow[])
-{
-    int vis[20] = {0}, i, j, u;
-    for (i = 0; i < n; i++)
-        outputRow[i] = INF;
-    outputRow[src] = 0;
-
-    for (i = 0; i < n - 1; i++)
-    {
-        int min = INF;
-        for (j = 0; j < n; j++)
-        {
-            if (!vis[j] && outputRow[j] < min)
-            {
-                min = outputRow[j];
-                u = j;
-            }
-        }
-        vis[u] = 1;
-        for (j = 0; j < n; j++)
-        {
-            if (!vis[j] && dist[u][j] != INF)
-            {
-                int weight = dist[u][j] + h[u] - h[j];
-                if (outputRow[u] + weight < outputRow[j])
-                    outputRow[j] = outputRow[u] + weight;
-            }
-        }
-    }
-}
-
-void johnsonsAlgorithm()
-{
-    int i, j, result[20][20];
-    for (i = 0; i < n; i++)
-        h[i] = 0;
-    for (i = 0; i < n; i++)
-        dijkstra(i, result[i]);
-    for (i = 0; i < n; i++)
-        for (j = 0; j < n; j++)
-            dist[i][j] = (result[i][j] == INF) ? INF : (result[i][j] - h[i] + h[j]);
-}
-
-int main()
-{
-    printf("1. Floyd-Warshall\n2. Johnson\n3. Multistage Graph\n");
-    int choice, u, v, w, i, j;
-
-    printf("Enter choice: ");
-    scanf("%d", &choice);
-    printf("Enter vertices and edges: ");
-    scanf("%d %d", &n, &e);
-
-    for (i = 0; i < n; i++)
-    {
-        for (j = 0; j < n; j++)
-            dist[i][j] = (i == j) ? 0 : INF;
-    }
-
+void readGraphEdges() {
     printf("Enter edges (u v w):\n");
-    for (i = 0; i < e; i++)
-    {
-        scanf("%d %d %d", &u, &v, &w);
-        dist[u][v] = w;
+    for (int i = 0; i < numEdges; i++) {
+        int sourceVertex, destVertex, edgeWeight;
+        scanf("%d %d %d", &sourceVertex, &destVertex, &edgeWeight);
+        distance[sourceVertex][destVertex] = edgeWeight;
     }
+}
 
-    if (choice == 1)
-    {
-        floydWarshall();
-    }
-    else if (choice == 2)
-    {
-        johnsonsAlgorithm();
-    }
-    else if (choice == 3)
-    {
-        multistageGraph();
-        printf("\nShortest path cost: %d\n", cost[0]);
-        return 0; // Multistage usually prints a single scalar result
-    }
-
+void printDistanceMatrix() {
     printf("\nAll pairs shortest paths:\n");
-    for (i = 0; i < n; i++)
-    {
-        for (j = 0; j < n; j++)
-        {
-            if (dist[i][j] == INF)
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            if (distance[i][j] == INF) {
                 printf("INF ");
-            else
-                printf("%d ", dist[i][j]);
+            } else {
+                printf("%d ", distance[i][j]);
+            }
         }
         printf("\n");
     }
-    return 0;
 }
 
-// Enter vertices and edges: 4 5
-// Enter edges (u v w):
-// 0 1 4
-// 0 2 1
-// 2 1 2
-// 1 3 1
-// 2 3 5
+void computeFloydWarshall() {
+    for (int k = 0; k < numVertices; k++) {
+        for (int i = 0; i < numVertices; i++) {
+            for (int j = 0; j < numVertices; j++) {
+                if (distance[i][k] + distance[k][j] < distance[i][j]) {
+                    distance[i][j] = distance[i][k] + distance[k][j];
+                }
+            }
+        }
+    }
+}
+
+void computeMultistageGraphCost() {
+    stageCost[numVertices - 1] = 0;
+    for (int i = numVertices - 2; i >= 0; i--) {
+        stageCost[i] = INF;
+        for (int j = i + 1; j < numVertices; j++) {
+            if (distance[i][j] != INF && distance[i][j] + stageCost[j] < stageCost[i]) {
+                stageCost[i] = distance[i][j] + stageCost[j];
+            }
+        }
+    }
+}
+
+void runDijkstra(int sourceVertex, int outputRow[]) {
+    int visited[MAX_VERTICES] = {0};
+
+    for (int i = 0; i < numVertices; i++) {
+        outputRow[i] = INF;
+    }
+    outputRow[sourceVertex] = 0;
+
+    for (int i = 0; i < numVertices - 1; i++) {
+        int minDistance = INF;
+        int currentVertex = 0;
+        for (int j = 0; j < numVertices; j++) {
+            if (!visited[j] && outputRow[j] < minDistance) {
+                minDistance = outputRow[j];
+                currentVertex = j;
+            }
+        }
+        visited[currentVertex] = 1;
+        for (int j = 0; j < numVertices; j++) {
+            if (!visited[j] && distance[currentVertex][j] != INF) {
+                int adjustedWeight = distance[currentVertex][j] + nodePotential[currentVertex] - nodePotential[j];
+                if (outputRow[currentVertex] + adjustedWeight < outputRow[j]) {
+                    outputRow[j] = outputRow[currentVertex] + adjustedWeight;
+                }
+            }
+        }
+    }
+}
+
+void computeJohnsonsAllPairsShortestPaths() {
+    int result[MAX_VERTICES][MAX_VERTICES];
+
+    for (int i = 0; i < numVertices; i++) {
+        nodePotential[i] = 0;
+    }
+
+    for (int i = 0; i < numVertices; i++) {
+        runDijkstra(i, result[i]);
+    }
+
+    for (int i = 0; i < numVertices; i++) {
+        for (int j = 0; j < numVertices; j++) {
+            distance[i][j] = (result[i][j] == INF) ? INF : (result[i][j] - nodePotential[i] + nodePotential[j]);
+        }
+    }
+}
+
+int main() {
+    printf("1. Floyd-Warshall\n2. Johnson\n3. Multistage Graph\n");
+
+    printf("Enter choice: ");
+    int choice;
+    scanf("%d", &choice);
+
+    printf("Enter vertices and edges: ");
+    scanf("%d %d", &numVertices, &numEdges);
+
+    initializeDistanceMatrix();
+    readGraphEdges();
+
+    if (choice == 1) {
+        computeFloydWarshall();
+    } else if (choice == 2) {
+        computeJohnsonsAllPairsShortestPaths();
+    } else if (choice == 3) {
+        computeMultistageGraphCost();
+        printf("\nShortest path cost: %d\n", stageCost[0]);
+        return 0;
+    }
+
+    printDistanceMatrix();
+    return 0;
+}
