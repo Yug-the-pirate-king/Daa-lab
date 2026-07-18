@@ -1,45 +1,58 @@
-#include <stdio.h>
+#include <cstdio>
 
-int binarySearch(int arr[], int n, int target)
+constexpr int MAX_SIZE = 50;
+
+int binarySearch(const int arr[], int n, int target)
 {
-    int low = 0, high = n - 1;
+    int low = 0;
+    int high = n - 1;
 
     while (low <= high)
     {
-        int mid = low + (high - low) / 2; // Avoids potential integer overflow
+        int mid = low + (high - low) / 2;
 
         if (arr[mid] == target)
         {
-            return mid; // Target found, return index
+            return mid;
         }
         if (arr[mid] < target)
         {
-            low = mid + 1; // Target is in the right half
+            low = mid + 1;
         }
         else
         {
-            high = mid - 1; // Target is in the left half
+            high = mid - 1;
         }
     }
-    return -1; // Target not found
+
+    return -1;
+}
+
+int readInt(const char *prompt)
+{
+    int value;
+    printf("%s", prompt);
+    scanf("%d", &value);
+    return value;
+}
+
+void readArray(int arr[], int n)
+{
+    printf("Enter elements in sorted order:\n");
+    for (int i = 0; i < n; ++i)
+    {
+        scanf("%d", &arr[i]);
+    }
 }
 
 int main()
 {
-    int arr[50], n, target, i;
+    int arr[MAX_SIZE];
 
-    printf("Enter number of elements (must be sorted): ");
-    scanf("%d", &n);
+    int n = readInt("Enter number of elements (must be sorted): ");
+    readArray(arr, n);
 
-    printf("Enter elements in sorted order:\n");
-    for (i = 0; i < n; i++)
-    {
-        scanf("%d", &arr[i]);
-    }
-
-    printf("Enter target element to search: ");
-    scanf("%d", &target);
-
+    int target = readInt("Enter target element to search: ");
     int result = binarySearch(arr, n, target);
 
     if (result != -1)
@@ -53,14 +66,3 @@ int main()
 
     return 0;
 }
-
-// Enter number of elements (must be sorted): 5
-// Enter elements in sorted order:
-// 10
-// 20
-// 30
-// 40
-// 50
-// Enter target element to search: 40
-//
-// Element found at index: 3
