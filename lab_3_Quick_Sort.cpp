@@ -1,77 +1,68 @@
-#include <stdio.h>
+#include <iostream>
+#include <utility>
+#include <vector>
 
-// Partitions the array using the last element as the pivot
-int partition(int arr[], int low, int high)
+int partitionRange(std::vector<int>& values, int low, int high)
 {
-    int pivot = arr[high];
-    int i = (low - 1); // Index of smaller element
-    int temp;
+    int pivot = values[high];
+    int smallerIndex = low - 1;
 
-    for (int j = low; j < high; j++)
+    for (int current = low; current < high; ++current)
     {
-        // If current element is smaller than or equal to pivot
-        if (arr[j] <= pivot)
+        if (values[current] <= pivot)
         {
-            i++;
-            // Swap arr[i] and arr[j]
-            temp = arr[i];
-            arr[i] = arr[j];
-            arr[j] = temp;
+            ++smallerIndex;
+            std::swap(values[smallerIndex], values[current]);
         }
     }
 
-    // Swap pivot into its correct final position
-    temp = arr[i + 1];
-    arr[i + 1] = arr[high];
-    arr[high] = temp;
-
-    return (i + 1); // Return partition split index
+    std::swap(values[smallerIndex + 1], values[high]);
+    return smallerIndex + 1;
 }
 
-void quickSort(int arr[], int low, int high)
+void quickSort(std::vector<int>& values, int low, int high)
 {
     if (low < high)
     {
-        int pi = partition(arr, low, high);
+        int pivotIndex = partitionRange(values, low, high);
 
-        quickSort(arr, low, pi - 1);  // Before partition index
-        quickSort(arr, pi + 1, high); // After partition index
+        quickSort(values, low, pivotIndex - 1);
+        quickSort(values, pivotIndex + 1, high);
     }
 }
 
 int main()
 {
-    int arr[100], n, i;
+    int n;
 
-    printf("Enter number of elements: ");
-    scanf("%d", &n);
-
-    printf("Enter elements:\n");
-    for (i = 0; i < n; i++)
+    std::cout << "Enter number of elements: ";
+    if (!(std::cin >> n) || n < 0)
     {
-        scanf("%d", &arr[i]);
+        return 0;
     }
 
-    quickSort(arr, 0, n - 1);
+    std::vector<int> values(n);
 
-    printf("\nSorted array:\n");
-    for (i = 0; i < n; i++)
+    std::cout << "Enter elements:\n";
+    for (int i = 0; i < n; ++i)
     {
-        printf("%d ", arr[i]);
+        if (!(std::cin >> values[i]))
+        {
+            return 0;
+        }
     }
-    printf("\n");
+
+    if (n > 0)
+    {
+        quickSort(values, 0, n - 1);
+    }
+
+    std::cout << "\nSorted array:\n";
+    for (int i = 0; i < n; ++i)
+    {
+        std::cout << values[i] << ' ';
+    }
+    std::cout << '\n';
 
     return 0;
 }
-
-// Enter number of elements: 6
-// Enter elements:
-// 10
-// 7
-// 8
-// 9
-// 1
-// 5
-//
-// Sorted array:
-// 1 5 7 8 9 10
