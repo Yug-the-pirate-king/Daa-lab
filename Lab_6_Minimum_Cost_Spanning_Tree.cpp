@@ -1,76 +1,80 @@
-#include <stdio.h>
-#define INF 999
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+#include <climits>
 
-int cost[20][20], n, e;
+const int INF = INT_MAX / 4;
 
-// Structure to represent an edge for Kruskal's algorithm
 struct Edge {
     int u, v, w;
-} edges[40];
-
-// --- KRUSKAL'S ALGORITHM HELPERS (Disjoint Set Union) ---
-int parent[20];
-
-int find(int i) {
-    while (parent[i] != i)
-        i = parent[i];
-    return i;
-}
-
-void unionSets(int i, int j) {
-    int a = find(i);
-    int b = find(j);
-    parent[a] = b;
-}
-
-void kruskalsMST() {
-    int i, j, minCost = 0, edgesCount = 0;
-
-    // Initialize DSU parent array
-    for (i = 0; i < n; i++) parent[i] = i;
-
-    // Simple Bubble Sort to sort edges by weight
-    for (i = 0; i < e - 1; i++) {
-        for (j = 0; j < e - i - 1; j++) {
-            if (edges[j].w > edges[j + 1].w) {
-                struct Edge temp = edges[j];
-                edges[j] = edges[j + 1];
-                edges[j + 1] = temp;
-            }
-        }
+    bool operator<(const Edge& other) const {
+        return w < other.w;
     }
+};
+
+struct DSU {
+    std::vector<int> parent, rank;
+    DSU(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; ++i) parent[i] = i;
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void unite(int a, int b) {
+        a = find(a);
+        b = find(b);
+        if (a == b) return;
+        if (rank[a] < rank[b]) {
+            int tmp = a;
+            a = b;
+            b = tmp;
+        }
+        parent[b] = a;
+        if (rank[a] == rank[b]) ++rank[a];
+    }
+};
+
+void kruskalsMST(const std::vector<Edge>& edgeList, int n) {
+    std::vector<Edge> edges = edgeList;
+    std::stable_sort(edges.begin(), edges.end());
+    DSU dsu(n);
+    long long minCost = 0;
+    int edgesCount = 0;
 
     printf("\nEdges in the MST (Kruskal's):\n");
-    for (i = 0; i < e; i++) {
-        // If roots are different, it doesn't form a cycle
-        if (find(edges[i].u) != find(edges[i].v)) {
-            printf("%d - %d: %d\n", edges[i].u, edges[i].v, edges[i].w);
-            minCost += edges[i].w;
-            unionSets(edges[i].u, edges[i].v);
-            edgesCount++;
+    for (const auto& e : edges) {
+        if (dsu.find(e.u) != dsu.find(e.v)) {
+            printf("%d - %d: %d\n", e.u, e.v, e.w);
+            minCost += e.w;
+            dsu.unite(e.u, e.v);
+            ++edgesCount;
             if (edgesCount == n - 1) break;
         }
     }
-    printf("Minimum Cost of Spanning Tree: %d\n", minCost);
+
+    if (edgesCount != n - 1) {
+        printf("Graph is disconnected. No spanning tree exists.\n");
+    } else {
+        printf("Minimum Cost of Spanning Tree: %lld\n", minCost);
+    }
 }
 
-// --- PRIM'S ALGORITHM ---
-void primsMST() {
-    int vis[20] = {0};
-    int i, j, k, minCost = 0, edgesCount = 0;
+void primsMST(const std::vector<std::vector<int>>& cost, int n) {
+    std::vector<int> vis(n, 0);
+    long long minCost = 0;
+    int edgesCount = 0;
 
-    // Start with the first vertex (vertex 0)
-    vis[0] = 1; 
+    vis[0] = 1;
 
     printf("\nEdges in the MST (Prim's):\n");
     while (edgesCount < n - 1) {
         int min = INF;
         int u = -1, v = -1;
 
-        // Find the absolute minimum weight edge connecting visited to unvisited vertices
-        for (i = 0; i < n; i++) {
+        for (int i = 0; i < n; ++i) {
             if (vis[i]) {
-                for (j = 0; j < n; j++) {
+                for (int j = 0; j < n; ++j) {
                     if (!vis[j] && cost[i][j] < min) {
                         min = cost[i][j];
                         u = i;
@@ -80,49 +84,74 @@ void primsMST() {
             }
         }
 
-        if (u != -1 && v != -1) {
-            printf("%d - %d: %d\n", u, v, min);
-            minCost += min;
-            vis[v] = 1;
-            edgesCount++;
+        if (u == -1 || v == -1) {
+            printf("Graph is disconnected. No spanning tree exists.\n");
+            return;
         }
+
+        printf("%d - %d: %d\n", u, v, min);
+        minCost += min;
+        vis[v] = 1;
+        ++edgesCount;
     }
-    printf("Minimum Cost of Spanning Tree: %d\n", minCost);
+
+    printf("Minimum Cost of Spanning Tree: %lld\n", minCost);
 }
 
 int main() {
-    int choice, u, v, w, i, j;
-
+    int choice;
     printf("1. Prim's Algorithm\n2. Kruskal's Algorithm\n");
     printf("Enter choice: ");
-    scanf("%d", &choice);
-
-    printf("Enter vertices and edges: ");
-    scanf("%d %d", &n, &e);
-
-    // Initialize cost matrix for Prim's
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            cost[i][j] = (i == j) ? 0 : INF;
-        }
+    if (scanf("%d", &choice) != 1) {
+        printf("Invalid input.\n");
+        return 1;
     }
+
+    int n, e;
+    printf("Enter vertices and edges: ");
+    if (scanf("%d %d", &n, &e) != 2) {
+        printf("Invalid input.\n");
+        return 1;
+    }
+
+    if (n <= 0 || e < 0) {
+        printf("Invalid number of vertices or edges.\n");
+        return 1;
+    }
+
+    long long maxEdges = 1LL * n * (n - 1) / 2;
+    if (e > maxEdges) {
+        printf("Too many edges for %d vertices.\n", n);
+        return 1;
+    }
+
+    std::vector<std::vector<int>> cost(n, std::vector<int>(n, INF));
+    for (int i = 0; i < n; ++i) cost[i][i] = 0;
+
+    std::vector<Edge> edges;
+    edges.reserve(e);
 
     printf("Enter edges (u v w):\n");
-    for (i = 0; i < e; i++) {
-        scanf("%d %d %d", &u, &v, &w);
-        
-        // Since MST applies to Undirected Graphs, map it both ways
-        cost[u][v] = w;
-        cost[v][u] = w;
+    for (int i = 0; i < e; ++i) {
+        int u, v, w;
+        if (scanf("%d %d %d", &u, &v, &w) != 3) {
+            printf("Invalid edge input.\n");
+            return 1;
+        }
+        if (u < 0 || u >= n || v < 0 || v >= n) {
+            printf("Vertex index out of range.\n");
+            return 1;
+        }
 
-        // Save to edge array for Kruskal's
-        edges[i].u = u;
-        edges[i].v = v;
-        edges[i].w = w;
+        if (u != v && w < cost[u][v]) {
+            cost[u][v] = w;
+            cost[v][u] = w;
+        }
+        edges.push_back({u, v, w});
     }
 
-    if (choice == 1) primsMST();
-    else if (choice == 2) kruskalsMST();
+    if (choice == 1) primsMST(cost, n);
+    else if (choice == 2) kruskalsMST(edges, n);
     else printf("Invalid choice!\n");
 
     return 0;
