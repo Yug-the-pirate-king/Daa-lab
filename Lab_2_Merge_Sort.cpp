@@ -1,12 +1,24 @@
-#include <stdio.h>
+#include <cstdio>
 
-// Merges two sorted subarrays into one sorted array
+constexpr int MAX_SIZE = 100;
+
+/**
+ * @brief Merges two adjacent sorted subarrays into a single sorted subarray.
+ *
+ * The left subarray spans arr[low..mid] and the right subarray spans
+ * arr[mid+1..high]. The merged result is written back into arr[low..high].
+ *
+ * @param arr  Array containing the subarrays.
+ * @param low  Start index of the left subarray.
+ * @param mid  End index of the left subarray.
+ * @param high End index of the right subarray.
+ */
 void merge(int arr[], int low, int mid, int high)
 {
-    int temp[100];
-    int i = low;     // Starting index for left subarray
-    int j = mid + 1; // Starting index for right subarray
-    int k = low;     // Starting index for temporary array
+    int temp[MAX_SIZE];
+    int i = low;
+    int j = mid + 1;
+    int k = low;
 
     while (i <= mid && j <= high)
     {
@@ -20,70 +32,69 @@ void merge(int arr[], int low, int mid, int high)
         }
     }
 
-    // Copy remaining elements of left subarray if any
     while (i <= mid)
     {
         temp[k++] = arr[i++];
     }
 
-    // Copy remaining elements of right subarray if any
     while (j <= high)
     {
         temp[k++] = arr[j++];
     }
 
-    // Copy the sorted elements back into original array
-    for (i = low; i <= high; i++)
+    for (i = low; i <= high; ++i)
     {
         arr[i] = temp[i];
     }
 }
 
+/**
+ * @brief Sorts an array using the merge sort algorithm.
+ *
+ * Recursively divides the range [low..high] into halves, sorts each half,
+ * and merges them back together.
+ *
+ * @param arr  Array to be sorted.
+ * @param low  Start index of the range.
+ * @param high End index of the range.
+ */
 void mergeSort(int arr[], int low, int high)
 {
     if (low < high)
     {
         int mid = low + (high - low) / 2;
 
-        mergeSort(arr, low, mid);      // Sort left half
-        mergeSort(arr, mid + 1, high); // Sort right half
-        merge(arr, low, mid, high);    // Merge both sorted halves
+        mergeSort(arr, low, mid);
+        mergeSort(arr, mid + 1, high);
+        merge(arr, low, mid, high);
     }
 }
 
+/**
+ * @brief Entry point: reads integers, sorts them, and prints the result.
+ */
 int main()
 {
-    int arr[100], n, i;
+    int arr[MAX_SIZE];
+    int n;
 
-    printf("Enter number of elements: ");
-    scanf("%d", &n);
+    std::printf("Enter number of elements: ");
+    std::scanf("%d", &n);
 
-    printf("Enter elements:\n");
-    for (i = 0; i < n; i++)
+    std::printf("Enter elements:\n");
+    for (int i = 0; i < n; ++i)
     {
-        scanf("%d", &arr[i]);
+        std::scanf("%d", &arr[i]);
     }
 
     mergeSort(arr, 0, n - 1);
 
-    printf("\nSorted array:\n");
-    for (i = 0; i < n; i++)
+    std::printf("\nSorted array:\n");
+    for (int i = 0; i < n; ++i)
     {
-        printf("%d ", arr[i]);
+        std::printf("%d ", arr[i]);
     }
-    printf("\n");
+    std::printf("\n");
 
     return 0;
 }
-
-// Enter number of elements: 6
-// Enter elements:
-// 12
-// 11
-// 13
-// 5
-// 6
-// 7
-//
-// Sorted array:
-// 5 6 7 11 12 13
