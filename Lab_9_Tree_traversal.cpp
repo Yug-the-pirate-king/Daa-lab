@@ -1,55 +1,135 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
-struct node
+// Represents a single node in a binary tree.
+struct Node
 {
-    int item;
-    struct node *left, *right;
+    int data;
+    Node *left;
+    Node *right;
 };
 
-void inorder(struct node *r)
+// Inorder traversal: left subtree, current node, right subtree.
+void inorder(Node *root)
 {
-    if (!r)
+    if (root == nullptr)
+    {
         return;
-    inorder(r->left);
-    printf("%d -> ", r->item);
-    inorder(r->right);
+    }
+    inorder(root->left);
+    printf("%d -> ", root->data);
+    inorder(root->right);
 }
 
-void preorder(struct node *r)
+// Preorder traversal: current node, left subtree, right subtree.
+void preorder(Node *root)
 {
-    if (!r)
+    if (root == nullptr)
+    {
         return;
-    printf("%d -> ", r->item);
-    preorder(r->left);
-    preorder(r->right);
+    }
+    printf("%d -> ", root->data);
+    preorder(root->left);
+    preorder(root->right);
 }
 
-void postorder(struct node *r)
+// Postorder traversal: left subtree, right subtree, current node.
+void postorder(Node *root)
 {
-    if (!r)
+    if (root == nullptr)
+    {
         return;
-    postorder(r->left);
-    postorder(r->right);
-    printf("%d -> ", r->item);
+    }
+    postorder(root->left);
+    postorder(root->right);
+    printf("%d -> ", root->data);
 }
 
-struct node *create(int val)
+// Create a new tree node; returns nullptr if allocation fails.
+Node *create(int value)
 {
-    struct node *n = (struct node *)malloc(sizeof(struct node));
-    n->item = val;
-    n->left = n->right = NULL;
-    return n;
+    Node *newNode = (Node *)malloc(sizeof(*newNode));
+    if (newNode == nullptr)
+    {
+        // Memory allocation failed; let the caller handle the error.
+        return nullptr;
+    }
+
+    newNode->data = value;
+    newNode->left = nullptr;
+    newNode->right = nullptr;
+    return newNode;
+}
+
+// Recursively free every node in the tree.
+void freeTree(Node *root)
+{
+    if (root == nullptr)
+    {
+        return;
+    }
+
+    freeTree(root->left);
+    freeTree(root->right);
+    free(root);
 }
 
 int main()
 {
-    // Using create() to map out our tree cleanly
-    struct node *root = create(1);
-    root->left = create(12);
-    root->right = create(9);
-    root->left->left = create(5);
-    root->left->right = create(6);
+    // Build the sample binary tree and validate each allocation.
+
+    Node *root = create(1);
+    if (root == nullptr)
+    {
+        fprintf(stderr, "Error: failed to allocate root node.\n");
+        return 1;
+    }
+
+    Node *leftChild = create(12);
+    if (leftChild == nullptr)
+    {
+        fprintf(stderr, "Error: failed to allocate left child node.\n");
+        freeTree(root);
+        return 1;
+    }
+
+    Node *rightChild = create(9);
+    if (rightChild == nullptr)
+    {
+        fprintf(stderr, "Error: failed to allocate right child node.\n");
+        freeTree(leftChild);
+        freeTree(root);
+        return 1;
+    }
+
+    root->left = leftChild;
+    root->right = rightChild;
+
+    Node *leftGrandchild1 = create(5);
+    if (leftGrandchild1 == nullptr)
+    {
+        fprintf(stderr, "Error: failed to allocate left grandchild node.\n");
+        freeTree(root);
+        return 1;
+    }
+
+    Node *leftGrandchild2 = create(6);
+    if (leftGrandchild2 == nullptr)
+    {
+        fprintf(stderr, "Error: failed to allocate left grandchild node.\n");
+        freeTree(leftGrandchild1);
+        freeTree(root);
+        return 1;
+    }
+
+    leftChild->left = leftGrandchild1;
+    leftChild->right = leftGrandchild2;
+
+    // Ensure the tree is usable before performing traversals.
+    if (root == nullptr)
+    {
+        return 1;
+    }
 
     printf("Inorder: \n");
     inorder(root);
@@ -62,6 +142,9 @@ int main()
     printf("Postorder: \n");
     postorder(root);
     printf("\n");
+
+    // Release all dynamically allocated memory.
+    freeTree(root);
 
     return 0;
 }
