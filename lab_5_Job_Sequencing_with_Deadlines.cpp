@@ -1,4 +1,5 @@
-#include <stdio.h>
+#include <cstdio>
+#include <vector>
 
 struct Job {
     char id;
@@ -6,85 +7,87 @@ struct Job {
     int profit;
 };
 
-void jobSequencing(struct Job jobs[], int n) {
-    int i, j;
-
-    // 1. Sort all jobs according to profit in descending order using Bubble Sort
-    for (i = 0; i < n - 1; i++) {
-        for (j = 0; j < n - i - 1; j++) {
+static void sortJobsByProfitDescending(std::vector<Job>& jobs) {
+    for (size_t i = 0; i + 1 < jobs.size(); ++i) {
+        for (size_t j = 0; j + 1 < jobs.size() - i; ++j) {
             if (jobs[j].profit < jobs[j + 1].profit) {
-                struct Job temp = jobs[j];
+                Job temp = jobs[j];
                 jobs[j] = jobs[j + 1];
                 jobs[j + 1] = temp;
             }
         }
     }
+}
 
-    // 2. Find the maximum deadline to determine the size of our timeline
-    int maxDeadline = 0;
-    for (i = 0; i < n; i++) {
-        if (jobs[i].deadline > maxDeadline) {
-            maxDeadline = jobs[i].deadline;
-        }
+void runJobSequencing(const Job* jobs, int numJobs) {
+    if (numJobs <= 0) {
+        printf("\nScheduled Jobs Sequence: \nTotal Profit: 0\n");
+        return;
     }
 
-    // 3. Initialize the timeline tracking array with empty slots (-1)
-    int result[20];
-    int slot[20] = {0}; // Tracks whether a slot is filled (1) or free (0)
-    for (i = 0; i <= maxDeadline; i++) {
-        result[i] = -1;
-    }
+    std::vector<Job> sortedJobs(jobs, jobs + numJobs);
+    sortJobsByProfitDescending(sortedJobs);
 
+    int timelineSize = numJobs;
+    std::vector<int> scheduledJobIndex(timelineSize + 1, -1);
+    std::vector<int> slotFilled(timelineSize + 1, 0);
     int totalProfit = 0;
 
-    // 4. Iterate through all sorted jobs and place them in their latest possible free slot
-    for (i = 0; i < n; i++) {
-        // Try to schedule from the last possible slot before the deadline backwards
-        for (j = jobs[i].deadline; j > 0; j--) {
-            if (slot[j] == 0) { // Free slot found
-                result[j] = i;  // Store index of the job
-                slot[j] = 1;    // Mark slot as filled
-                totalProfit += jobs[i].profit;
+    for (int i = 0; i < numJobs; ++i) {
+        int latestSlot = sortedJobs[i].deadline;
+        if (latestSlot > timelineSize) {
+            latestSlot = timelineSize;
+        }
+
+        for (int j = latestSlot; j > 0; --j) {
+            if (slotFilled[j] == 0) {
+                scheduledJobIndex[j] = i;
+                slotFilled[j] = 1;
+                totalProfit += sortedJobs[i].profit;
                 break;
             }
         }
     }
 
-    // 5. Print the scheduled sequence
     printf("\nScheduled Jobs Sequence: ");
-    for (i = 1; i <= maxDeadline; i++) {
-        if (slot[i] == 1) {
-            printf("%c ", jobs[result[i]].id);
+    for (int i = 1; i <= timelineSize; ++i) {
+        if (slotFilled[i] == 1) {
+            printf("%c ", sortedJobs[scheduledJobIndex[i]].id);
         }
     }
     printf("\nTotal Profit: %d\n", totalProfit);
 }
 
 int main() {
-    int n, i;
-    struct Job jobs[20];
+    const int MAX_JOBS = 100;
+    int numJobs;
 
     printf("Enter number of jobs: ");
-    scanf("%d", &n);
-
-    printf("Enter job details (ID Deadline Profit):\n");
-    for (i = 0; i < n; i++) {
-        // Clear input buffer before reading a character ID safely
-        scanf(" %c %d %d", &jobs[i].id, &jobs[i].deadline, &jobs[i].profit);
+    if (scanf("%d", &numJobs) != 1 || numJobs < 0 || numJobs > MAX_JOBS) {
+        printf("Error: number of jobs must be between 0 and %d.\n", MAX_JOBS);
+        return 1;
     }
 
-    jobSequencing(jobs, n);
+    std::vector<Job> jobs;
+    jobs.reserve(numJobs);
 
+    printf("Enter job details (ID Deadline Profit):\n");
+    for (int i = 0; i < numJobs; ++i) {
+        Job currentJob;
+
+        if (scanf(" %c %d %d", &currentJob.id, &currentJob.deadline, &currentJob.profit) != 3) {
+            printf("Error: invalid job details for job %d.\n", i + 1);
+            return 1;
+        }
+
+        if (currentJob.deadline < 0) {
+            printf("Error: deadline for job %d must be non-negative.\n", i + 1);
+            return 1;
+        }
+
+        jobs.push_back(currentJob);
+    }
+
+    runJobSequencing(jobs.data(), static_cast<int>(jobs.size()));
     return 0;
 }
-
-// Enter number of jobs: 5
-// Enter job details (ID Deadline Profit):
-// a 2 100
-// b 1 19
-// c 2 27
-// d 1 25
-// e 3 15
-//
-// Scheduled Jobs Sequence: c a e 
-// Total Profit: 142
