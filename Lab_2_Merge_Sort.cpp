@@ -1,77 +1,95 @@
-#include <stdio.h>
+#include <iostream>
+#include <vector>
 
-// Merges two sorted subarrays into one sorted array
-void merge(int arr[], int low, int mid, int high)
+// Merges two sorted subarrays arr[low..mid] and arr[mid+1..high]
+// back into a single sorted subarray arr[low..high].
+void merge(std::vector<int> &arr, int low, int mid, int high)
 {
-    int temp[100];
-    int i = low;     // Starting index for left subarray
-    int j = mid + 1; // Starting index for right subarray
-    int k = low;     // Starting index for temporary array
+    int left = low;       // Current index in the left subarray
+    int right = mid + 1;  // Current index in the right subarray
 
-    while (i <= mid && j <= high)
+    // Temporary buffer sized exactly for the current subarray.
+    std::vector<int> temp;
+    temp.reserve(static_cast<std::size_t>(high - low + 1));
+
+    // Pick the smaller element from either subarray until one is exhausted.
+    while (left <= mid && right <= high)
     {
-        if (arr[i] <= arr[j])
+        if (arr[left] <= arr[right])
         {
-            temp[k++] = arr[i++];
+            temp.push_back(arr[left++]);
         }
         else
         {
-            temp[k++] = arr[j++];
+            temp.push_back(arr[right++]);
         }
     }
 
-    // Copy remaining elements of left subarray if any
-    while (i <= mid)
+    // Copy any remaining elements from the left subarray.
+    while (left <= mid)
     {
-        temp[k++] = arr[i++];
+        temp.push_back(arr[left++]);
     }
 
-    // Copy remaining elements of right subarray if any
-    while (j <= high)
+    // Copy any remaining elements from the right subarray.
+    while (right <= high)
     {
-        temp[k++] = arr[j++];
+        temp.push_back(arr[right++]);
     }
 
-    // Copy the sorted elements back into original array
-    for (i = low; i <= high; i++)
+    // Write the merged values back into the original array.
+    for (std::size_t idx = 0; idx < temp.size(); ++idx)
     {
-        arr[i] = temp[i];
+        arr[static_cast<std::size_t>(low) + idx] = temp[idx];
     }
 }
 
-void mergeSort(int arr[], int low, int high)
+// Recursively splits the array and merges the sorted halves.
+void mergeSort(std::vector<int> &arr, int low, int high)
 {
     if (low < high)
     {
+        // Midpoint calculation avoids potential overflow.
         int mid = low + (high - low) / 2;
 
-        mergeSort(arr, low, mid);      // Sort left half
-        mergeSort(arr, mid + 1, high); // Sort right half
-        merge(arr, low, mid, high);    // Merge both sorted halves
+        mergeSort(arr, low, mid);      // Sort the left half
+        mergeSort(arr, mid + 1, high); // Sort the right half
+        merge(arr, low, mid, high);    // Merge the two sorted halves
     }
 }
 
 int main()
 {
-    int arr[100], n, i;
+    int n = 0;
 
-    printf("Enter number of elements: ");
-    scanf("%d", &n);
-
-    printf("Enter elements:\n");
-    for (i = 0; i < n; i++)
+    std::cout << "Enter number of elements: ";
+    if (!(std::cin >> n) || n <= 0)
     {
-        scanf("%d", &arr[i]);
+        std::cerr << "Invalid input: please enter a positive integer.\n";
+        return 1;
+    }
+
+    // Dynamic container removes the fixed-size array limitation.
+    std::vector<int> arr(static_cast<std::size_t>(n));
+
+    std::cout << "Enter elements:\n";
+    for (int i = 0; i < n; ++i)
+    {
+        if (!(std::cin >> arr[static_cast<std::size_t>(i)]))
+        {
+            std::cerr << "Invalid input for element " << (i + 1) << ".\n";
+            return 1;
+        }
     }
 
     mergeSort(arr, 0, n - 1);
 
-    printf("\nSorted array:\n");
-    for (i = 0; i < n; i++)
+    std::cout << "\nSorted array:\n";
+    for (int i = 0; i < n; ++i)
     {
-        printf("%d ", arr[i]);
+        std::cout << arr[static_cast<std::size_t>(i)]
+                  << (i + 1 == n ? '\n' : ' ');
     }
-    printf("\n");
 
     return 0;
 }
